@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preload" as="image" href="./images/chess-poster.webp" fetchpriority="high" />
+  <style id="chess-poster-style">
+    :root { --color-site: #c9c9c9; }
+    html, body { margin: 0; background: var(--color-site); overflow: hidden; }
+    #root { width: 100%; height: 100vh; height: 100dvh; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+    }
+    .chess-poster { position: fixed; inset: 0; overflow: hidden; pointer-events: none; background: #c9c9c9; }
+    /* Match CameraRig's min(width / 13.2, height / 13.8) at every aspect ratio. */
+    .chess-poster img {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      display: block; width: min(104.545455vw, 100dvh); height: auto; max-width: none;
+    }
+  </style>
+  <meta name="description" content="An autonomous 3D chess simulation by Neilson Koerner-Safrata." />
+  <meta name="theme-color" content="#c9c9c9" />
+  <title>Chess</title>
+</head>
+<body>
+  <main id="root"><div class="chess-poster" aria-hidden="true"><img src="./images/chess-poster.webp" alt="" width="3072" height="3072" loading="eager" fetchpriority="high" decoding="sync" /></div></main>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

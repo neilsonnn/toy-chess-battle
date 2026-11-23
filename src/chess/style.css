@@ -1,0 +1,10 @@
+.chess-simulation {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-site);
+  pointer-events: none;
+}
+.chess-world { position: absolute; inset: 0; }
+.chess-simulation canvas { display: block; pointer-events: none; }
