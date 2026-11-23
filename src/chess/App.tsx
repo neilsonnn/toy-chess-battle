@@ -34,7 +34,7 @@ export default function App({ active, onReady }: { active: boolean; onReady: () 
     return () => window.removeEventListener('keydown', onKey)
   }, [active, reset])
   return <>
-    <h1 className="sr-only">Chess</h1>
+    <h1 className="sr-only">Chess Sim</h1>
     <div aria-hidden="true" className="chess-simulation" data-ready={ready} data-board-size={engine.size} data-games={Object.entries(engine.flags).filter(([, enabled]) => enabled).map(([game]) => game).join(',')}>
       {!ready && <ChessPoster />}
       <div className="chess-world" style={{ visibility: ready && active ? 'inherit' : 'hidden' }}>
