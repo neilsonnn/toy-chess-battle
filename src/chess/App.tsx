@@ -1,10 +1,10 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { Component, useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useGame } from './game/store'
 import { ChessPoster } from './Poster'
+import World from './render/World'
 import './style.css'
 
-const World = lazy(() => import('./render/World'))
 class RenderBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false }
   static getDerivedStateFromError() { return { failed: true } }
@@ -38,7 +38,7 @@ export default function App({ active, onReady }: { active: boolean; onReady: () 
     <div aria-hidden="true" className="chess-simulation" data-ready={ready} data-board-size={engine.size} data-games={Object.entries(engine.flags).filter(([, enabled]) => enabled).map(([game]) => game).join(',')}>
       {!ready && <ChessPoster />}
       <div className="chess-world" style={{ visibility: ready && active ? 'inherit' : 'hidden' }}>
-        <RenderBoundary><Suspense fallback={null}><World active={active} onReady={onWorldReady} /></Suspense></RenderBoundary>
+        <RenderBoundary><World active={active} onReady={onWorldReady} /></RenderBoundary>
       </div>
     </div>
   </>

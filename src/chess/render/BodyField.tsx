@@ -114,7 +114,7 @@ export const BodyField = memo(function BodyField({ engine }: { engine: Engine })
   }
   // Sync once before Physics (-2), then upload instance matrices once after all
   // fixed substeps. A slow frame must not redraw the whole field per substep.
-  useFrame((_, delta) => { sync(); if (!engine.paused && engine.hold <= 0) state.accumulator += Math.min(delta, 0.5); else state.accumulator = 0 }, -3)
+  useFrame((_, delta) => { sync(); if (!engine.paused) state.accumulator += Math.min(delta, 0.5); else state.accumulator = 0 }, -3)
   useFrame(() => draw(), -1)
   useBeforePhysicsStep(() => {
     for (const record of state.dead.values()) { record.previous.copy(record.current); record.previousRotation.copy(record.currentRotation) }

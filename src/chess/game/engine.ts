@@ -2,7 +2,6 @@ import { add, same, CARDINAL, DIAGONAL, DEFAULT_FLAGS, gameOf } from './types'
 import type { Actor, Blast, CaptureEvent, Cell, Corpse, Drop, Flags, Game, Kind, Missile, Mode, Move } from './types'
 export const CORPSE_LIFETIME = 12
 export const MAX_CORPSES = 160
-export const START_DELAY = 0
 function retain<T>(array: T[], keep: (item: T) => boolean) { let write = 0; for (let read = 0; read < array.length; read++) if (keep(array[read])) array[write++] = array[read]; array.length = write }
 
 // Rules are independent of rendering and physics. Grid occupancy stays authoritative;
@@ -24,7 +23,6 @@ export class Engine {
   blasts: Blast[] = []
   captures: CaptureEvent[] = []
   clock = 0
-  hold = START_DELAY
   paused = false
   totalCaptures = 0
   round = 1
@@ -59,10 +57,13 @@ export class Engine {
   reset() {
     this.actors = []; this.occupancy.clear(); this.reservations.clear(); this.mines.clear(); this.clues.clear()
     this.corpses = []; this.missiles = []; this.drops = []; this.blasts = []; this.captures = []
-    this.clock = 0; this.hold = START_DELAY; this.totalCaptures = 0; this.nextMine = 6; this.nextDrop = 2; this.goColor = 0
+    this.clock = 0; this.totalCaptures = 0; this.nextMine = 6; this.nextDrop = 2; this.goColor = 0
     this.serial = 0; this.generation++; this.touch()
     for (const g of ['chess', 'checkers', 'ships', 'go'] as Game[]) if (this.flags[g]) this.populate(g)
     if (this.flags.mines) this.seedMines(4)
+    for (const actor of this.actors) {
+      if (actor.active && gameOf(actor.kind) === 'chess') actor.next = 0
+    }
   }
   make(kind: Kind, side: number, cell: Cell, dir: number, active = true): Actor {
     const a: Actor = { id: ++this.serial, kind, originalKind: kind, side, cell: { ...cell }, home: { ...cell }, from: { ...cell }, dir,
@@ -331,10 +332,9 @@ export class Engine {
     }
   }
   advance(realDelta: number) {
-    if (this.hold > 0) { const used = Math.min(realDelta, this.hold); this.hold -= used; realDelta -= used }
     if (this.paused || realDelta <= 0) return
     // Independent decisions remain stable through slow frames/background throttling.
-    for (let remaining = Math.min(realDelta, 30); remaining > 1e-8;) { const dt = Math.min(0.025, remaining); this.step(dt); remaining -= dt; if (this.hold > 0) break }
+    for (let remaining = Math.min(realDelta, 30); remaining > 1e-8;) { const dt = Math.min(0.025, remaining); this.step(dt); remaining -= dt }
   }
   step(dt: number) {
     this.clock += dt

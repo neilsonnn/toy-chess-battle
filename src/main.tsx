@@ -1,15 +1,12 @@
-import { lazy, StrictMode, Suspense } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ChessPoster } from './chess/Poster'
+import Chess from './chess/App'
 
-const Chess = lazy(() => import('./chess/App'))
 const onReady = () => {}
 const root = import.meta.hot?.data.root ?? createRoot(document.getElementById('root')!)
 if (import.meta.hot) import.meta.hot.data.root = root
 root.render(
   <StrictMode>
-    <Suspense fallback={<ChessPoster />}>
-      <Chess active onReady={onReady} />
-    </Suspense>
+    <Chess active onReady={onReady} />
   </StrictMode>,
 )

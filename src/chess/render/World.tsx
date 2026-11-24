@@ -1,4 +1,4 @@
-import { memo, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, startTransition, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { CuboidCollider, Physics, RigidBody } from '@react-three/rapier'
 import { BoxGeometry, Color, DirectionalLight, DynamicDrawUsage, InstancedMesh, Matrix4, MeshBasicMaterial, Quaternion, Vector3 } from 'three'
@@ -62,7 +62,7 @@ function Effects({ engine }: { engine: Engine }) {
 }
 function CameraRig({ engine }: { engine: Engine }) {
   const { camera, size } = useThree()
-  useEffect(() => {
+  useLayoutEffect(() => {
     camera.position.set(15, 15.25, -15)
     camera.lookAt(0, 0.25, 0)
     camera.zoom = Math.min(size.width / (engine.size * 1.65), size.height / (engine.size * 1.35 + 3))
@@ -70,27 +70,31 @@ function CameraRig({ engine }: { engine: Engine }) {
   }, [engine, size.width, size.height, camera])
   return null
 }
-function FirstFrame({ onReady }: { onReady: () => void }) {
-  const frames = useRef(0)
-  useFrame(() => { if (++frames.current === 2) onReady() })
+function BattleFrame({ active, onReady }: { active: boolean; onReady: () => void }) {
+  const ready = useRef(false)
+  // Start the clock when Physics is mounted, before the first body update.
+  useLayoutEffect(resumeClock, [])
+  useFrame(() => { if (active) tick() }, -100)
+  useFrame(() => {
+    if (ready.current) return
+    ready.current = true
+    onReady()
+  })
   return null
 }
 const Scene = memo(function Scene({ active, onReady }: { active: boolean, onReady: () => void }) {
-  const engine = useGame(s => s.engine), holding = useGame(s => s.hold > 0)
+  const engine = useGame(s => s.engine)
   const light = useRef<DirectionalLight>(null)
-  const started = useRef(false)
-  const onFirstReady = useCallback(() => {
-    resumeClock()
-    started.current = true
-    onReady()
-  }, [onReady])
+  const [loadPhysics, setLoadPhysics] = useState(false)
+  // Avoid committing a Suspense fallback while Rapier initializes so React can
+  // reveal the board immediately when the transition resolves.
+  useLayoutEffect(() => { startTransition(() => setLoadPhysics(true)) }, [])
   useEffect(() => {
     if (!light.current) return
     // Add 50% coverage beyond the original shadow bounds.
     const camera = light.current.shadow.camera, radius = (engine.size / 2 + 5) * 1.5
     camera.left = -radius; camera.right = radius; camera.top = radius; camera.bottom = -radius; camera.updateProjectionMatrix()
   }, [engine])
-  useFrame(() => { if (active && started.current) tick() }, -100)
   useFrame((state, dt) => sampleFrame(dt, state.gl.info.render.calls))
   return <>
     <ambientLight intensity={0.12} />
@@ -98,10 +102,10 @@ const Scene = memo(function Scene({ active, onReady }: { active: boolean, onRead
     <directionalLight ref={light} position={[-12, 22, -9]} intensity={3.1} castShadow shadow-mapSize={[4096, 4096]} shadow-bias={-0.00001} shadow-normalBias={0.001} shadow-camera-near={0.5} shadow-camera-far={60} />
     <CameraRig engine={engine} />
     <Suspense fallback={null}>
-      <Physics updatePriority={-2} paused={!active || holding} timeStep={1 / 60} gravity={[0, PHYSICS.gravity, 0]} numSolverIterations={PHYSICS.solverIterations}
+      {loadPhysics && <Physics updatePriority={-2} paused={!active} timeStep={1 / 60} gravity={[0, PHYSICS.gravity, 0]} numSolverIterations={PHYSICS.solverIterations}
         numInternalPgsIterations={PHYSICS.internalIterations} contactNaturalFrequency={PHYSICS.contactFrequency} allowedLinearError={PHYSICS.allowedError} maxCcdSubsteps={1}>
-        <Board size={engine.size} /><BodyField engine={engine} /><FirstFrame onReady={onFirstReady} />
-      </Physics>
+        <Board size={engine.size} /><BodyField engine={engine} /><BattleFrame active={active} onReady={onReady} />
+      </Physics>}
     </Suspense>
     <Effects engine={engine} />
   </>

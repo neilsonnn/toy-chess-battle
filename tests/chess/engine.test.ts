@@ -4,7 +4,7 @@ import { DEFAULT_FLAGS, GAMES } from '../../src/chess/game/types'
 import type { Actor, Cell, Flags, Kind } from '../../src/chess/game/types'
 
 const OFF: Flags = { chess: false, checkers: false, mines: false, ships: false, go: false }
-const arena = () => { const e = new Engine('realism', 8, OFF, 123); e.hold = 0; return e }
+const arena = () => new Engine('realism', 8, OFF, 123)
 function put(e: Engine, kind: Kind, cell: Cell, side = 0, dir = 1): Actor {
   const a = e.make(kind, side, cell, dir, false); a.active = true; a.life = 1; a.next = Infinity; e.occupy(a); return a
 }
@@ -17,8 +17,9 @@ describe('Realism formations and scheduling', () => {
     expect(e.occupancy.size).toBe(50); expect(e.mines.size).toBe(4); expect(e.validate()).toBe(true)
   })
   it('starts on the first frame and freezes game time while paused', () => {
-    const e = new Engine(); expect(e.hold).toBe(0)
+    const e = new Engine()
     e.advance(1 / 60); expect(e.clock).toBeCloseTo(1 / 60)
+    expect(e.actors.some(actor => actor.moving)).toBe(true)
     e.paused = true; e.advance(4); expect(e.clock).toBeCloseTo(1 / 60)
   })
   it('uses independent decision times and reserves destinations before respawning victims', () => {
@@ -31,7 +32,7 @@ describe('Realism formations and scheduling', () => {
     const e = arena(); e.mode = 'elimination'; const a = put(e, 'pawn', { x: 2, z: 6 }), b = put(e, 'rook', { x: 1, z: 1 }, 1)
     e.capture(b, a); expect(b.active).toBe(false); expect(b.waiting).toBe(false)
     e.move(a, { cell: { x: 2, z: 7 } }); e.advance(0.4); expect(a.kind).toBe('queen')
-    e.advance(15); expect(e.round).toBe(2); expect(e.clock).toBeCloseTo(0.4); expect(e.hold).toBe(0)
+    e.advance(15); expect(e.round).toBe(2); expect(e.clock).toBeCloseTo(0.4)
   })
 })
 
