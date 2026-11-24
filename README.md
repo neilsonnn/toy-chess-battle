@@ -1,1 +1,1 @@
-![chess-sim](public/images/chess-poster.webp)
+![Chess Battle screenshot](docs/screenshot.webp)
