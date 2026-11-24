@@ -16,10 +16,14 @@ describe('Realism formations and scheduling', () => {
     expect(e.actors.filter(a => a.kind === 'checker')).toHaveLength(12)
     expect(e.occupancy.size).toBe(50); expect(e.mines.size).toBe(4); expect(e.validate()).toBe(true)
   })
-  it('starts on the first frame and freezes game time while paused', () => {
-    const e = new Engine()
+  it('starts on the first game tick, staggers opening decisions, and freezes game time while paused', () => {
+    const e = new Engine('realism', 8, DEFAULT_FLAGS, 123)
+    const delays = e.actors.map(actor => actor.next)
+    expect(Math.min(...delays)).toBe(0)
+    expect(Math.max(...delays)).toBeLessThanOrEqual(0.5)
+    expect(new Set(delays).size).toBe(delays.length)
     e.advance(1 / 60); expect(e.clock).toBeCloseTo(1 / 60)
-    expect(e.actors.some(actor => actor.moving)).toBe(true)
+    expect(e.actors.filter(actor => actor.moving)).toHaveLength(1)
     e.paused = true; e.advance(4); expect(e.clock).toBeCloseTo(1 / 60)
   })
   it('uses independent decision times and reserves destinations before respawning victims', () => {

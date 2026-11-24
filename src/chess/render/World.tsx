@@ -72,12 +72,14 @@ function CameraRig({ engine }: { engine: Engine }) {
 }
 function BattleFrame({ active, onReady }: { active: boolean; onReady: () => void }) {
   const ready = useRef(false)
-  // Start the clock when Physics is mounted, before the first body update.
-  useLayoutEffect(resumeClock, [])
-  useFrame(() => { if (active) tick() }, -100)
+  const preparedFrames = useRef(0)
+  useFrame(() => { if (active && ready.current) tick() }, -100)
   useFrame(() => {
     if (ready.current) return
+    preparedFrames.current++
+    if (preparedFrames.current < 2) return
     ready.current = true
+    resumeClock()
     onReady()
   })
   return null
@@ -87,7 +89,7 @@ const Scene = memo(function Scene({ active, onReady }: { active: boolean, onRead
   const light = useRef<DirectionalLight>(null)
   const [loadPhysics, setLoadPhysics] = useState(false)
   // Avoid committing a Suspense fallback while Rapier initializes so React can
-  // reveal the board immediately when the transition resolves.
+  // mount the physics scene as soon as the transition resolves.
   useLayoutEffect(() => { startTransition(() => setLoadPhysics(true)) }, [])
   useEffect(() => {
     if (!light.current) return

@@ -61,9 +61,14 @@ export class Engine {
     this.serial = 0; this.generation++; this.touch()
     for (const g of ['chess', 'checkers', 'ships', 'go'] as Game[]) if (this.flags[g]) this.populate(g)
     if (this.flags.mines) this.seedMines(4)
+    // Give the earliest piece that can legally move an immediate start.
+    let firstMove: Actor | undefined
     for (const actor of this.actors) {
-      if (actor.active && gameOf(actor.kind) === 'chess') actor.next = 0
+      if (!actor.active || gameOf(actor.kind) !== 'chess') continue
+      actor.next = this.random() * 0.5
+      if ((!firstMove || actor.next < firstMove.next) && this.legal(actor).length) firstMove = actor
     }
+    if (firstMove) firstMove.next = 0
   }
   make(kind: Kind, side: number, cell: Cell, dir: number, active = true): Actor {
     const a: Actor = { id: ++this.serial, kind, originalKind: kind, side, cell: { ...cell }, home: { ...cell }, from: { ...cell }, dir,
