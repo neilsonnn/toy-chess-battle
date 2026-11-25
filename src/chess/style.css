@@ -8,3 +8,6 @@
 }
 .chess-world { position: absolute; inset: 0; }
 .chess-simulation canvas { display: block; pointer-events: none; }
+@media (any-pointer: coarse) {
+  .chess-simulation canvas { pointer-events: auto; touch-action: none; }
+}

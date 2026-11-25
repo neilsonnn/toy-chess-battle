@@ -35,6 +35,7 @@ export default function App({ active, onReady }: { active: boolean; onReady: () 
   }, [active, reset])
   return <>
     <h1 className="sr-only">Chess Sim</h1>
+    <p className="sr-only">Drag with one finger to orbit. Move two fingers together to orbit and pinch to zoom during the same gesture. Press R, Space, or Escape to reset the battle.</p>
     <div aria-hidden="true" className="chess-simulation" data-ready={ready} data-board-size={engine.size} data-games={Object.entries(engine.flags).filter(([, enabled]) => enabled).map(([game]) => game).join(',')}>
       {!ready && <ChessPoster />}
       <div className="chess-world" style={{ visibility: ready && active ? 'inherit' : 'hidden' }}>

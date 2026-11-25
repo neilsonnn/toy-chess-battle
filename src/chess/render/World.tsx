@@ -1,7 +1,8 @@
 import { memo, startTransition, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { CuboidCollider, Physics, RigidBody } from '@react-three/rapier'
-import { BoxGeometry, Color, DirectionalLight, DynamicDrawUsage, InstancedMesh, Matrix4, MeshBasicMaterial, Quaternion, Vector3 } from 'three'
+import { BoxGeometry, Color, DirectionalLight, DynamicDrawUsage, InstancedMesh, Matrix4, MeshBasicMaterial, OrthographicCamera, Quaternion, TOUCH, Vector3 } from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { Engine } from '../game/engine'
 import { resumeClock, tick, useGame } from '../game/store'
@@ -61,12 +62,34 @@ function Effects({ engine }: { engine: Engine }) {
   return <group><primitive object={state.clues} /><primitive object={state.crosses} /></group>
 }
 function CameraRig({ engine }: { engine: Engine }) {
-  const { camera, size } = useThree()
+  const { camera, gl, size } = useThree()
+  const controlsRef = useRef<OrbitControls | null>(null)
+  const fitZoom = useRef<number | null>(null)
   useLayoutEffect(() => {
     camera.position.set(15, 15.25, -15)
-    camera.lookAt(0, 0.25, 0)
-    camera.zoom = Math.min(size.width / (engine.size * 1.65), size.height / (engine.size * 1.35 + 3))
+    const controls = new OrbitControls(camera, gl.domElement)
+    controls.target.set(0, 0.25, 0)
+    controls.enablePan = false
+    controls.mouseButtons = { LEFT: null, MIDDLE: null, RIGHT: null }
+    controls.touches.TWO = TOUCH.DOLLY_ROTATE
+    controls.minPolarAngle = 0.2
+    controls.maxPolarAngle = Math.PI / 2 - 0.1
+    controls.rotateSpeed = 0.35
+    controls.update()
+    controlsRef.current = controls
+    return () => { controls.dispose(); controlsRef.current = null; fitZoom.current = null }
+  }, [camera, gl])
+  useLayoutEffect(() => {
+    const controls = controlsRef.current
+    if (!controls || !(camera instanceof OrthographicCamera) || size.width <= 0 || size.height <= 0) return
+    const fit = Math.min(size.width / (engine.size * 1.65), size.height / (engine.size * 1.35 + 3))
+    const magnification = fitZoom.current === null ? 1 : camera.zoom / fitZoom.current
+    fitZoom.current = fit
+    controls.minZoom = fit * 0.65
+    controls.maxZoom = fit * 3
+    camera.zoom = fit * magnification
     camera.updateProjectionMatrix()
+    controls.update()
   }, [engine, size.width, size.height, camera])
   return null
 }
